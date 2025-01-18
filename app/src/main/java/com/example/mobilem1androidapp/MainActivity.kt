@@ -37,7 +37,8 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var googleSignInClient: GoogleSignInClient
 
     // HTTP Client
-    private val client = OkHttpClient()
+    private val client = OkHttpClient.Builder().build()
+
 
     companion object {
         const val RC_SIGN_IN = 1001
@@ -167,22 +168,25 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
         }
     }
 
-    // Fetch server information
+    //Task3: Login And Server Info
     private fun fetchServerInfo(userName: String) {
         val request = Request.Builder()
-            .url("http://10.0.2.2:3000/api/info")
+            .url("http://172.23.102.8:3000/api/info") // Replace with the correct backend URL
             .build()
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
+                Log.e("ServerRequest", "Request failed: ${e.message}")
+                e.printStackTrace() // Print the error stack trace
                 runOnUiThread {
-                    Toast.makeText(this@MainActivity, "Server request failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "Server request failed: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
 
             override fun onResponse(call: Call, response: Response) {
                 if (response.isSuccessful) {
                     val responseBody = response.body?.string()
+                    Log.d("ServerResponse", "Response: $responseBody")
                     if (!responseBody.isNullOrEmpty()) {
                         runOnUiThread {
                             val intent = Intent(this@MainActivity, ServerInfoActivity::class.java)
@@ -191,11 +195,13 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
                             startActivity(intent)
                         }
                     } else {
+                        Log.e("ServerResponse", "Empty response body")
                         runOnUiThread {
                             Toast.makeText(this@MainActivity, "Empty server response", Toast.LENGTH_SHORT).show()
                         }
                     }
                 } else {
+                    Log.e("ServerResponse", "Response Code: ${response.code}, Message: ${response.message}")
                     runOnUiThread {
                         Toast.makeText(this@MainActivity, "Server error: ${response.code}", Toast.LENGTH_SHORT).show()
                     }
